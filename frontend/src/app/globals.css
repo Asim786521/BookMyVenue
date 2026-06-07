@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  background: #f8fafc;
+  color: #0f172a;
+}
+
+input,
+select,
+textarea {
+  @apply rounded-md border border-slate-300 px-3 py-2 outline-none focus:border-teal;
+}
+
+button,
+a {
+  @apply transition-colors;
+}
