@@ -29,9 +29,11 @@ export class VenuesService {
     limit: number;
   }) {
     const cacheKey = `venues:search:${JSON.stringify(query)}`;
-    const cached = await redis.get(cacheKey).catch(() => null);
-    if (cached) return JSON.parse(cached);
-
+    if(redis) {
+      const cached = await redis.get(cacheKey).catch(() => null);
+      if (cached) return JSON.parse(cached);
+    }
+ 
     const where: Prisma.VenueWhereInput = {
       status: VenueStatuses.APPROVED,
       city: query.city ? { contains: query.city, mode: "insensitive" as Prisma.QueryMode } : undefined,
@@ -60,7 +62,7 @@ export class VenuesService {
     ]);
 
     const result = { items, total, page: query.page, limit: query.limit };
-    await redis.set(cacheKey, JSON.stringify(result), "EX", searchCacheTtl).catch(() => undefined);
+    // await redis.set(cacheKey, JSON.stringify(result), "EX", searchCacheTtl).catch(() => undefined);
     return result;
   }
 

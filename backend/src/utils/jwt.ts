@@ -1,4 +1,4 @@
-import jwt, { SignOptions } from "jsonwebtoken";
+import jwt, { SignOptions, TokenExpiredError } from "jsonwebtoken";
 import { env } from "../config/env";
 import { Role } from "../types/domain";
 
@@ -16,5 +16,24 @@ export const signRefreshToken = (user: JwtUser) =>
     expiresIn: `${env.JWT_REFRESH_DAYS}d`
   });
 
-export const verifyAccessToken = (token: string) => jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtUser;
-export const verifyRefreshToken = (token: string) => jwt.verify(token, env.JWT_REFRESH_SECRET) as JwtUser;
+ 
+export const verifyAccessToken = (token: string): JwtUser | null => {
+  try {
+    return jwt.verify(token, env.JWT_ACCESS_SECRET) as JwtUser;
+  } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      console.log("Token expired");
+    }
+    return null;
+  }
+};
+export const verifyRefreshToken = (token: string): JwtUser | null => {
+  try {
+    return jwt.verify(token, env.JWT_REFRESH_SECRET) as JwtUser;
+  } catch (error) {
+    if (error instanceof TokenExpiredError) {
+      console.log("Refresh token expired");
+    }
+    return null;
+  }
+};

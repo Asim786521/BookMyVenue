@@ -18,7 +18,9 @@ declare global {
 export const authenticate = (req: Request, _res: Response, next: NextFunction) => {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) throw new AppError(401, "Missing access token", "UNAUTHORIZED");
+    console.log("udoysdy8stfsdiufsidutf"+header)
   req.user = verifyAccessToken(header.slice(7));
+
   next();
 };
 

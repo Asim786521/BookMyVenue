@@ -28,6 +28,7 @@ export default function RegisterPage() {
     try {
       const res = await api.post("/auth/register", data);
       authStore.save(res.data);
+      router.refresh();
       router.push(data.role === "VENUE_OWNER" ? "/owner" : "/venues");
     } catch {
       setError("Could not create account. Try another email.");

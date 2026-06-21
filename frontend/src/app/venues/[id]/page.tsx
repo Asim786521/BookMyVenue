@@ -23,6 +23,11 @@ export default function VenueDetailsPage() {
   };
 
   const book = async (slotId: string) => {
+    const isCheckAutheticated = localStorage.getItem("bmv_access_token");
+    if (!isCheckAutheticated) {
+      router.push("/login");
+      return;
+    }
     try {
       await api.post("/bookings", { venueId: id, slotId, date });
       router.push("/dashboard/bookings");

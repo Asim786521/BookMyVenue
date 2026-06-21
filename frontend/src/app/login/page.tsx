@@ -18,10 +18,12 @@ export default function LoginPage() {
   const { register, handleSubmit, formState } = useForm<FormData>({ resolver: zodResolver(schema) });
 
   const onSubmit = async (data: FormData) => {
+     console.log("data", data);
     setError("");
     try {
       const res = await api.post("/auth/login", data);
       authStore.save(res.data);
+      router.refresh();
       const role = res.data.user.role;
       router.push(role === "ADMIN" ? "/admin" : role === "VENUE_OWNER" ? "/owner" : "/venues");
     } catch {

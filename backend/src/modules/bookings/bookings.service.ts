@@ -5,52 +5,106 @@ import { publishEvent } from "../../kafka/producers/event-producer";
 import { kafkaTopics } from "../../kafka/topics/topics";
 import { AppError } from "../../utils/app-error";
 import { BookingStatuses, VenueStatuses } from "../../types/domain";
+import { parseDateToUTC } from "../../utils/date-utils";
 
 export class BookingsService {
   async create(userId: string, input: { venueId: string; slotId: string; date: string }) {
+    console.log("🟡 STEP 1: ENTER CREATE");
+
     const lockKey = `lock:venue:${input.venueId}:date:${input.date}:slot:${input.slotId}`;
-    const lockToken = await redisLockService.acquire(lockKey, 300);
-    if (!lockToken) throw new AppError(409, "Slot is being booked, try again", "BOOKING_LOCKED");
+    console.log("🔒 LOCK KEY:", lockKey);
+
+    // const lockToken = await redisLockService.acquire(lockKey, 300);
+    // console.log("🔐 LOCK TOKEN:", lockToken);
+
+    // if (!lockToken) {
+    //   console.log("❌ LOCK FAILED");
+    //   throw new AppError(409, "Slot is being booked, try again", "BOOKING_LOCKED");
+    // }
 
     try {
+      console.log("🟡 STEP 2: START TRANSACTION");
+
       return await prisma.$transaction(async (tx: any) => {
-        await tx.$queryRaw`SELECT id FROM venue_slots WHERE id = ${input.slotId}::uuid FOR UPDATE`;
+        console.log("🟡 STEP 3: LOCK SLOT ROW");
+
+        await tx.$queryRaw`
+        SELECT id FROM venue_slots 
+        WHERE id = ${input.slotId}::uuid 
+        FOR UPDATE
+      `;
+
+        console.log("🟡 STEP 4: FIND VENUE");
 
         const venue = await tx.venue.findFirst({
-          where: { id: input.venueId, status: VenueStatuses.APPROVED, slots: { some: { id: input.slotId } } }
+          where: {
+            id: input.venueId,
+            status: VenueStatuses.APPROVED,
+            slots: { some: { id: input.slotId } },
+          },
         });
-        if (!venue) throw new AppError(404, "Venue or slot not available", "VENUE_NOT_AVAILABLE");
+
+        console.log("VENUE FOUND:", !!venue);
+
+        if (!venue) {
+          console.log("❌ VENUE NOT FOUND");
+          throw new AppError(404, "Venue or slot not available", "VENUE_NOT_AVAILABLE");
+        }
+
+        console.log("🟡 STEP 5: CHECK EXISTING BOOKING");
 
         const existing = await tx.booking.findFirst({
           where: {
             venueId: input.venueId,
             date: new Date(input.date),
             slotId: input.slotId,
-            status: { in: [BookingStatuses.PENDING_PAYMENT, BookingStatuses.CONFIRMED] }
-          }
+            status: {
+              in: [BookingStatuses.PENDING_PAYMENT, BookingStatuses.CONFIRMED],
+            },
+          },
         });
+
+        console.log("EXISTING BOOKING:", !!existing);
+
         if (existing) {
+          console.log("❌ SLOT ALREADY BOOKED");
           throw new AppError(409, "Slot already booked", "SLOT_BOOKED");
         }
-
+ 
+        const bookingDate = parseDateToUTC(input.date);
+         console.log("PARSED BOOKING DATE (UTC):", bookingDate.toISOString());
         const booking = await tx.booking.create({
           data: {
             userId,
             venueId: input.venueId,
             slotId: input.slotId,
-            date: new Date(input.date),
+            date: bookingDate,
             amount: venue.price,
             status: BookingStatuses.PENDING_PAYMENT,
-            history: { create: { status: BookingStatuses.PENDING_PAYMENT, note: "Booking created" } },
-            payment: { create: { amount: venue.price } }
+            history: {
+              create: {
+                status: BookingStatuses.PENDING_PAYMENT,
+                note: "Booking created",
+              },
+            },
+            payment: {
+              create: { amount: venue.price },
+            },
           },
-          include: { venue: true, slot: true, payment: true }
+          include: { venue: true, slot: true, payment: true },
         });
+
+        console.log("✅ STEP 7: BOOKING CREATED");
 
         return booking;
       });
+    } catch (err) {
+      console.error("🔥 BOOKING CREATE ERROR:");
+      console.error(err);
+      throw err;
     } finally {
-      await redisLockService.release(lockKey, lockToken);
+      console.log("🧹 RELEASING LOCK");
+      // await redisLockService.release(lockKey, lockToken);
     }
   }
 

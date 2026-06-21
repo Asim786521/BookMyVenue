@@ -1,5 +1,5 @@
 import { env } from "./config/env";
-import { redis } from "./config/redis";
+// import { redis } from "./config/redis";
 import { createApp } from "./app";
 import { startNotificationConsumer } from "./kafka/consumers/notification.consumer";
 
