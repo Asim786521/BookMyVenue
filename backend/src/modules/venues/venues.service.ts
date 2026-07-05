@@ -1,6 +1,6 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../../config/prisma";
-import { redis } from "../../config/redis";
+// import { redis } from "../../config/redis";
 import { AppError } from "../../utils/app-error";
 import { VenueStatuses } from "../../types/domain";
 
@@ -29,10 +29,10 @@ export class VenuesService {
     limit: number;
   }) {
     const cacheKey = `venues:search:${JSON.stringify(query)}`;
-    if(redis) {
-      const cached = await redis.get(cacheKey).catch(() => null);
-      if (cached) return JSON.parse(cached);
-    }
+    // if(redis) {
+    //   const cached = await redis.get(cacheKey).catch(() => null);
+    //   if (cached) return JSON.parse(cached);
+    // }
  
     const where: Prisma.VenueWhereInput = {
       status: VenueStatuses.APPROVED,

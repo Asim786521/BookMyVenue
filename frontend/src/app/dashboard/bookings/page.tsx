@@ -35,8 +35,16 @@ export default function MyBookingsPage() {
                   <p className="text-sm text-slate-600">{new Date(booking?.date).toLocaleDateString()} · {booking?.slot.label}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="rounded bg-slate-100 px-2 py-1 text-xs font-medium">{booking?.status}</span>
-                  {booking?.status !== "CANCELLED" && (
+                  <span
+                    className={`rounded px-2 py-1 text-sm ${booking.status === "CONFIRMED"
+                        ? "bg-green-100 text-green-700"
+                        : booking.status === "CANCELLED"
+                          ? "bg-red-100 text-red-700"
+                          : "bg-slate-100 text-slate-700"
+                      }`}
+                  >
+                    {booking.status}
+                  </span>                  {booking?.status !== "CANCELLED" && (
                     <button onClick={() => cancel(booking.id)} className="rounded-md border border-red-200 px-3 py-2 text-sm text-red-600">Cancel</button>
                   )}
                 </div>

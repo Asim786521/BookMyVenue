@@ -17,3 +17,4 @@ apiRoutes.use("/payments", paymentsRoutes);
 apiRoutes.use("/owner", ownerVenueRoutes);
 apiRoutes.use("/admin", adminRoutes);
 apiRoutes.use("/analytics", analyticsRoutes);
+apiRoutes.use("/payments", paymentsRoutes);

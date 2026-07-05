@@ -22,20 +22,34 @@ export default function VenueDetailsPage() {
     setSlots(res.data);
   };
 
-  const book = async (slotId: string) => {
-    const isCheckAutheticated = localStorage.getItem("bmv_access_token");
-    if (!isCheckAutheticated) {
-      router.push("/login");
-      return;
-    }
-    try {
-      await api.post("/bookings", { venueId: id, slotId, date });
-      router.push("/dashboard/bookings");
-    } catch {
-      setMessage("This slot is no longer available.");
-    }
-  };
+const book = async (slotId: string) => {
+  const token = localStorage.getItem("bmv_access_token");
 
+  if (!token) {
+    router.push("/login");
+    return;
+  }
+
+  try {
+    // Create booking
+    const bookingRes = await api.post("/bookings", {
+      venueId: id,
+      slotId,
+      date,
+    });
+
+    const booking = bookingRes.data;
+
+    // Create Stripe PaymentIntent
+    const paymentRes = await api.post("/payments/create-order", {
+      bookingId: booking.id,
+    });
+
+router.push(`/checkout?bookingId=${booking.id}`);
+  } catch (err) {
+    setMessage("This slot is no longer available.");
+  }
+};
   if (!venue) return <main className="mx-auto max-w-6xl px-4 py-8">Loading...</main>;
 
   return (

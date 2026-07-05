@@ -9,6 +9,8 @@ export default function VenuesPage() {
   const [venues, setVenues] = useState<Venue[]>([]);
   const [city, setCity] = useState("");
   const [loading, setLoading] = useState(true);
+  // 1. Add a flag to track if the application has mounted on the client
+  const [isMounted, setIsMounted] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -18,8 +20,25 @@ export default function VenuesPage() {
   };
 
   useEffect(() => {
+    // 2. Set mount status to true when client runtime executes
+    setIsMounted(true);
     load();
   }, []);
+
+  // 3. Fallback skeleton layout during SSR & initial hydration to dodge all errors
+  if (!isMounted) {
+    return (
+      <main className="mx-auto max-w-6xl px-4 py-8">
+        <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
+          <div>
+            <h1 className="text-3xl font-bold">Find venues</h1>
+            <p className="mt-1 text-slate-600">Search approved venues by city, capacity, price, and date.</p>
+          </div>
+        </div>
+        <p className="mt-8">Loading application...</p>
+      </main>
+    );
+  }
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
@@ -29,6 +48,7 @@ export default function VenuesPage() {
           <p className="mt-1 text-slate-600">Search approved venues by city, capacity, price, and date.</p>
         </div>
         <div className="flex gap-2">
+          {/* Extension-targeted items safely run here now */}
           <input value={city} onChange={(e) => setCity(e.target.value)} placeholder="City" />
           <button onClick={load} className="rounded-md bg-ink px-4 py-2 text-white">Search</button>
         </div>

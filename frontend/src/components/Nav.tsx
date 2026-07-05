@@ -8,9 +8,12 @@ import { authStore } from "@/lib/auth";
 export function Nav() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
-  const user = authStore.user();
+  // 1. Convert user variable into a React state
+  const [user, setUser] = useState<any>(null);
 
   useEffect(() => {
+    // 2. Fetch the user safely on the client side during mount
+    setUser(authStore.user());
     setMounted(true);
   }, []);
 
@@ -44,6 +47,8 @@ export function Nav() {
               className="rounded-md bg-ink px-3 py-2 text-white"
               onClick={() => {
                 authStore.clear();
+                // 3. Clear user state immediately so navbar updates instantly on logout
+                setUser(null); 
                 router.push("/login");
               }}
             >

@@ -11,8 +11,8 @@ export default function AdminPage() {
   const [venues, setVenues] = useState<Venue[]>([]);
 
   const load = async () => {
-    const [analyticsRes, venuesRes] = await Promise.all([api.get("/admin/analytics"), api.get("/admin/pending-venues")]);
-    setAnalytics(analyticsRes.data);
+    const [venuesRes] = await Promise.all([api.get("/admin/pending-venues")]);
+    // setAnalytics(analyticsRes.data);
     setVenues(venuesRes.data);
   };
   useEffect(() => { load(); }, []);
